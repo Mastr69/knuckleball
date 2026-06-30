@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KnuckleBall - 2v2 Arena</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase Compat Libraries (Standard Script Tags to prevent CORS issues on file:// protocol) -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
     <style>
         @keyframes pulse-fast {
             0%, 100% { opacity: 1; }
@@ -375,23 +379,54 @@
         // --- DEFINE GLOBAL DOM SELECTOR HELPER BEFORE FIRST USE ---
         const $ = id => document.getElementById(id);
 
-        // --- Data: Standard Exhibition Teams ---
+        // --- Data: Standard Exhibition Teams (Full 40 Roster Restored!) ---
         const STANDARD_TEAMS = [
-            { name: "AFC Bournemouth", abbrev: "BOU", primary: "#b50e12", secondary: "#000000", rating: 76 },
-            { name: "Arsenal", abbrev: "ARS", primary: "#EF0107", secondary: "#FFFFFF", rating: 85 },
-            { name: "Aston Villa", abbrev: "AVL", primary: "#95BFE5", secondary: "#670E36", rating: 81 },
-            { name: "Chelsea", abbrev: "CHE", primary: "#034694", secondary: "#FFFFFF", rating: 84 },
-            { name: "Liverpool", abbrev: "LIV", primary: "#C8102E", secondary: "#F6EB61", rating: 86 },
-            { name: "Manchester City", abbrev: "MCI", primary: "#6CABDD", secondary: "#1C2C5B", rating: 88 },
-            { name: "Manchester United", abbrev: "MUN", primary: "#DA291C", secondary: "#000000", rating: 84 },
-            { name: "Tottenham Hotspur", abbrev: "TOT", primary: "#132257", secondary: "#FFFFFF", rating: 82 },
-            { name: "Atlético Madrid", abbrev: "ATM", primary: "#CB3524", secondary: "#1C3C73", rating: 85 },
-            { name: "Barcelona", abbrev: "BAR", primary: "#004D98", secondary: "#A50044", rating: 87 },
-            { name: "Real Madrid", abbrev: "RMA", primary: "#FFFFFF", secondary: "#122F67", rating: 89 },
-            { name: "Sevilla", abbrev: "SEV", primary: "#FFFFFF", secondary: "#FF0000", rating: 79 }
+            // Premier League
+            { name: "AFC Bournemouth", abbrev: "BOU", primary: "#b50e12", secondary: "#000000", rating: 76, league: "Premier League" },
+            { name: "Arsenal", abbrev: "ARS", primary: "#EF0107", secondary: "#FFFFFF", rating: 85, league: "Premier League" },
+            { name: "Aston Villa", abbrev: "AVL", primary: "#95BFE5", secondary: "#670E36", rating: 81, league: "Premier League" },
+            { name: "Brentford", abbrev: "BRE", primary: "#e30613", secondary: "#fbec5d", rating: 78, league: "Premier League" },
+            { name: "Brighton & Hove Albion", abbrev: "BHA", primary: "#0057B8", secondary: "#FFFFFF", rating: 80, league: "Premier League" },
+            { name: "Chelsea", abbrev: "CHE", primary: "#034694", secondary: "#FFFFFF", rating: 84, league: "Premier League" },
+            { name: "Coventry City", abbrev: "COV", primary: "#87CEFA", secondary: "#000000", rating: 70, league: "Premier League" },
+            { name: "Crystal Palace", abbrev: "CRY", primary: "#1B458F", secondary: "#C4122E", rating: 78, league: "Premier League" },
+            { name: "Everton", abbrev: "EVE", primary: "#003399", secondary: "#FFFFFF", rating: 76, league: "Premier League" },
+            { name: "Fulham", abbrev: "FUL", primary: "#FFFFFF", secondary: "#000000", rating: 77, league: "Premier League" },
+            { name: "Hull City", abbrev: "HUL", primary: "#F5910F", secondary: "#000000", rating: 71, league: "Premier League" },
+            { name: "Ipswich Town", abbrev: "IPS", primary: "#0000FF", secondary: "#FFFFFF", rating: 73, league: "Premier League" },
+            { name: "Leeds United", abbrev: "LEE", primary: "#FFFFFF", secondary: "#FFCD00", rating: 75, league: "Premier League" },
+            { name: "Liverpool", abbrev: "LIV", primary: "#C8102E", secondary: "#F6EB61", rating: 86, league: "Premier League" },
+            { name: "Manchester City", abbrev: "MCI", primary: "#6CABDD", secondary: "#1C2C5B", rating: 88, league: "Premier League" },
+            { name: "Manchester United", abbrev: "MUN", primary: "#DA291C", secondary: "#000000", rating: 84, league: "Premier League" },
+            { name: "Newcastle United", abbrev: "NEW", primary: "#000000", secondary: "#FFFFFF", rating: 82, league: "Premier League" },
+            { name: "Nottingham Forest", abbrev: "NFO", primary: "#DD0000", secondary: "#FFFFFF", rating: 76, league: "Premier League" },
+            { name: "Sunderland", abbrev: "SUN", primary: "#FF0000", secondary: "#FFFFFF", rating: 72, league: "Premier League" },
+            { name: "Tottenham Hotspur", abbrev: "TOT", primary: "#132257", secondary: "#FFFFFF", rating: 82, league: "Premier League" },
+            
+            // La Liga
+            { name: "Alavés", abbrev: "ALA", primary: "#0000FF", secondary: "#FFFFFF", rating: 75, league: "La Liga" },
+            { name: "Athletic Club", abbrev: "ATH", primary: "#E30613", secondary: "#FFFFFF", rating: 81, league: "La Liga" },
+            { name: "Atlético Madrid", abbrev: "ATM", primary: "#CB3524", secondary: "#1C3C73", rating: 85, league: "La Liga" },
+            { name: "Barcelona", abbrev: "BAR", primary: "#004D98", secondary: "#A50044", rating: 87, league: "La Liga" },
+            { name: "Celta Vigo", abbrev: "CEL", primary: "#87ADDF", secondary: "#FFFFFF", rating: 77, league: "La Liga" },
+            { name: "Elche", abbrev: "ELC", primary: "#008751", secondary: "#FFFFFF", rating: 72, league: "La Liga" },
+            { name: "Espanyol", abbrev: "ESP", primary: "#008CD2", secondary: "#FFFFFF", rating: 75, league: "La Liga" },
+            { name: "Getafe", abbrev: "GET", primary: "#0000C8", secondary: "#FFFFFF", rating: 76, league: "La Liga" },
+            { name: "Girona", abbrev: "GIR", primary: "#E30613", secondary: "#FFFFFF", rating: 81, league: "La Liga" },
+            { name: "Levante", abbrev: "LEV", primary: "#004D98", secondary: "#A50044", rating: 74, league: "La Liga" },
+            { name: "Mallorca", abbrev: "MAL", primary: "#E30613", secondary: "#000000", rating: 76, league: "La Liga" },
+            { name: "Osasuna", abbrev: "OSA", primary: "#9E1B22", secondary: "#162E5B", rating: 77, league: "La Liga" },
+            { name: "Real Oviedo", abbrev: "OVI", primary: "#0000FF", secondary: "#FFFFFF", rating: 71, league: "La Liga" },
+            { name: "Rayo Vallecano", abbrev: "RAY", primary: "#FFFFFF", secondary: "#FF0000", rating: 76, league: "La Liga" },
+            { name: "Real Betis", abbrev: "BET", primary: "#009A44", secondary: "#FFFFFF", rating: 80, league: "La Liga" },
+            { name: "Real Madrid", abbrev: "RMA", primary: "#FFFFFF", secondary: "#122F67", rating: 89, league: "La Liga" },
+            { name: "Real Sociedad", abbrev: "RSO", primary: "#0000FF", secondary: "#FFFFFF", rating: 82, league: "La Liga" },
+            { name: "Sevilla", abbrev: "SEV", primary: "#FFFFFF", secondary: "#FF0000", rating: 79, league: "La Liga" },
+            { name: "Valencia", abbrev: "VAL", primary: "#FFFFFF", secondary: "#FFA500", rating: 78, league: "La Liga" },
+            { name: "Villarreal", abbrev: "VIL", primary: "#FFDF00", secondary: "#0000FF", rating: 80, league: "La Liga" }
         ];
 
-        // --- Data: 48 World Cup Teams (Now with Emojis!) ---
+        // --- Data: 48 World Cup Teams (With Emojis!) ---
         const WC_TEAMS = [
             { name: "Mexico", emoji: "🇲🇽", abbrev: "MEX", rating: 80, primary: "#006847", secondary: "#FFFFFF", stripes: "V", badge: "#CE1126" },
             { name: "South Africa", emoji: "🇿🇦", abbrev: "RSA", rating: 75, primary: "#007A4D", secondary: "#FFB612", stripes: "V", badge: "#000000" },
@@ -458,16 +493,16 @@
             "Group L": ["England", "Croatia", "Ghana", "Panama"]
         };
 
-        // --- State ---
+        // --- Core State ---
         let screen = 'menu';
         let gameMode = 'single';
         let difficulty = 'medium';
         let matchDuration = 90;
         let submode = 'exhibition'; // exhibition, worldcup
 
-        // Current match players
-        let team1 = STANDARD_TEAMS[0]; 
-        let team2 = STANDARD_TEAMS[1]; 
+        // Current exhibition match players
+        let team1 = STANDARD_TEAMS[13]; // Liverpool default
+        let team2 = STANDARD_TEAMS[35]; // Real Madrid default
         
         let score1 = 0;
         let score2 = 0;
@@ -514,7 +549,7 @@
 
         window.showScreen = (s) => {
             screen = s;
-            ['screen-menu', 'screen-how-to-play', 'screen-setup', 'screen-lobby', 'screen-game', 'screen-wc-hub'].forEach(id => {
+            ['screen-menu', 'screen-how-to-play', 'screen-setup', 'screen-game', 'screen-wc-hub'].forEach(id => {
                 const el = $(id);
                 if (el) el.classList.add('hidden');
             });
@@ -533,12 +568,6 @@
                 } else {
                     selectSubmode('exhibition'); 
                 }
-            }
-
-            // High compatibility exits
-            const exitBtn = $('btn-exit');
-            if (exitBtn) {
-                exitBtn.classList.toggle('hidden', s !== 'game' && s !== 'lobby' && s !== 'wc-hub');
             }
         };
 
@@ -585,20 +614,34 @@
             resetMatchFully();
         };
 
-        // --- SETUP SCREEN Badges & Selects ---
+        // --- SETUP SCREEN Badges & Selects (Dynamically Groups full PL and La Liga roster) ---
         function populateSelectors() {
             const s1 = $('select-team1');
             const s2 = $('select-team2');
             
             if (s1 && s2) {
-                let options = STANDARD_TEAMS.map(t => `<option value="${t.name}">${t.name} (${t.abbrev})</option>`).join("");
-                s1.innerHTML = options;
-                s2.innerHTML = options;
+                const plTeams = STANDARD_TEAMS.filter(t => t.league === "Premier League");
+                const llTeams = STANDARD_TEAMS.filter(t => t.league === "La Liga");
 
-                s1.value = STANDARD_TEAMS[0].name;
-                s2.value = STANDARD_TEAMS[1].name;
-                team1 = STANDARD_TEAMS[0];
-                team2 = STANDARD_TEAMS[1];
+                let plOptions = plTeams.map(t => `<option value="${t.name}">${t.name} (${t.abbrev})</option>`).join("");
+                let llOptions = llTeams.map(t => `<option value="${t.name}">${t.name} (${t.abbrev})</option>`).join("");
+
+                let groupedHTML = `
+                    <optgroup label="Premier League">
+                        ${plOptions}
+                    </optgroup>
+                    <optgroup label="La Liga">
+                        ${llOptions}
+                    </optgroup>
+                `;
+
+                s1.innerHTML = groupedHTML;
+                s2.innerHTML = groupedHTML;
+
+                s1.value = "Liverpool";
+                s2.value = "Real Madrid";
+                team1 = STANDARD_TEAMS.find(t => t.name === "Liverpool");
+                team2 = STANDARD_TEAMS.find(t => t.name === "Real Madrid");
 
                 s1.addEventListener('change', e => { team1 = STANDARD_TEAMS.find(t=>t.name === e.target.value); updateTeamCards(); });
                 s2.addEventListener('change', e => { team2 = STANDARD_TEAMS.find(t=>t.name === e.target.value); updateTeamCards(); });
@@ -1744,8 +1787,8 @@
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
             ctx.lineWidth = 4;
             ctx.beginPath(); ctx.moveTo(court.width/2, court.border); ctx.lineTo(court.width/2, court.height - court.border); ctx.stroke();
-            ctx.beginPath(); ctx.arc(court.width/2, court.height/2, 90, 0, Math.PI*2); ctx.stroke();
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'; ctx.beginPath(); ctx.arc(court.width/2, court.height/2, 6, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(court.width/2, court.height/2, 90, 0, Math.PI * 2); ctx.stroke();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'; ctx.beginPath(); ctx.arc(court.width/2, court.height/2, 6, 0, Math.PI * 2); ctx.fill();
 
             // Boxes
             let pbH = 320, pbW = 150;
@@ -1759,10 +1802,10 @@
 
             // Nets
             ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3;
-            ctx.fillRect(court.border - goalWidth, court.height/2 - goalHeight/2, goalWidth, goalHeight);
-            ctx.strokeRect(court.border - goalWidth, court.height/2 - goalHeight/2, goalWidth, goalHeight);
-            ctx.fillRect(court.width - court.border, court.height/2 - goalHeight/2, goalWidth, goalHeight);
-            ctx.strokeRect(court.width - court.border, court.height/2 - goalHeight/2, goalWidth, goalHeight);
+            ctx.fillRect(court.border - goalWidth, court.height/2 - goalHeight / 2, goalWidth, goalHeight);
+            ctx.strokeRect(court.border - goalWidth, court.height/2 - goalHeight / 2, goalWidth, goalHeight);
+            ctx.fillRect(court.width - court.border, court.height/2 - goalHeight / 2, goalWidth, goalHeight);
+            ctx.strokeRect(court.width - court.border, court.height/2 - goalHeight / 2, goalWidth, goalHeight);
 
             // Draw Players (if in WC mode, use flags!)
             if (submode === 'worldcup') {
@@ -1771,7 +1814,7 @@
             } else {
                 const dP = (p, team) => {
                     ctx.shadowBlur = p.isDashing ? 15 : 6; ctx.shadowColor = team.primary;
-                    ctx.fillStyle = team.primary; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = team.primary; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
                     ctx.strokeStyle = team.secondary; ctx.lineWidth = 4; ctx.stroke();
                     ctx.shadowBlur = 0;
                     ctx.fillStyle = team.secondary; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1782,20 +1825,20 @@
 
             // Render Goalkeepers
             ctx.shadowBlur = 0;
-            ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(gk1.x, gk1.y, gk1.radius, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(gk1.x, gk1.y, gk1.radius, 0, Math.PI * 2); ctx.fill();
             ctx.strokeStyle = team1.primary; ctx.lineWidth = 4; ctx.stroke();
             ctx.fillStyle = "#ffffff"; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText("GK", gk1.x, gk1.y);
 
-            ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(gk2.x, gk2.y, gk2.radius, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(gk2.x, gk2.y, gk2.radius, 0, Math.PI * 2); ctx.fill();
             ctx.strokeStyle = team2.primary; ctx.lineWidth = 4; ctx.stroke();
             ctx.fillStyle = "#ffffff"; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText("GK", gk2.x, gk2.y);
 
             // Draw Ball
             ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(255,255,255,0.6)';
-            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2); ctx.fill();
-            ctx.shadowBlur = 0; ctx.strokeStyle = '#222222'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2); ctx.stroke();
+            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0; ctx.strokeStyle = '#222222'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.stroke();
             for (let i = 0; i < 5; i++) {
                 let ang = (i * 2 * Math.PI) / 5;
                 ctx.beginPath(); ctx.moveTo(ball.x, ball.y); ctx.lineTo(ball.x + Math.cos(ang)*(ball.radius-2), ball.y + Math.sin(ang)*(ball.radius-2)); ctx.stroke();
